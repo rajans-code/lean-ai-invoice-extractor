@@ -29,6 +29,10 @@ This project **explicitly uses IBM's open-source Granite LLM** (`granite3.3:2b`)
 ### Setup
 
 ollama pull granite3.3:2b
+<<<<<<< HEAD
+=======
+
+>>>>>>> e500254a06f69f8e113cf1887d7b30bcb5e26acc
 ollama run granite3.3:2b
 
 
@@ -43,7 +47,11 @@ OLLAMA_ENDPOINT=http://localhost:11434/api/generate
 ## 🛠️ Installation
 
 
+<<<<<<< HEAD
 git clone https://github.com/yourusername/lean-ai-invoice-extractor.git
+=======
+git clone https://github.com/yrajans-code/lean-ai-invoice-extractor.git
+>>>>>>> e500254a06f69f8e113cf1887d7b30bcb5e26acc
 cd lean-ai-invoice-extractor
 python -m venv venv
 venv\Scripts\activate      # On Windows
@@ -82,9 +90,12 @@ Output will be organized in a timestamped batch folder under `Output/`, includin
 - `log/batch_<timestamp>.log`: trace log
 
 ---
+<<<<<<< HEAD
 
 ## 📄 License
 
 MIT License
 
 ---
+=======
+>>>>>>> e500254a06f69f8e113cf1887d7b30bcb5e26acc
