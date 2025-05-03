@@ -43,7 +43,7 @@ OLLAMA_ENDPOINT=http://localhost:11434/api/generate
 ## 🛠️ Installation
 
 
-git clone https://github.com/yourusername/lean-ai-invoice-extractor.git
+git clone https://github.com/yrajans-code/lean-ai-invoice-extractor.git
 cd lean-ai-invoice-extractor
 python -m venv venv
 venv\Scripts\activate      # On Windows
