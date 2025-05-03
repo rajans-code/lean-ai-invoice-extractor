@@ -1,0 +1,11 @@
+python-dotenv
+requests
+pandas
+python-docx
+pillow
+reportlab
+pdf2image
+pytesseract
+docling-parse
+docling-core
+docling
