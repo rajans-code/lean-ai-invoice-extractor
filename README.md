@@ -66,8 +66,8 @@ pip install -r requirements.txt
 Create a `.env` file in the root:
 
 
-INPUT_DIR=C:\Docling_working_dir\Input
-BASE_OUTPUT_DIR=C:\Docling_working_dir\Output
+INPUT_DIR=C:\Batch\Input
+BASE_OUTPUT_DIR=C:\Batch\Output
 OLLAMA_MODEL=granite3.3:2b
 OLLAMA_ENDPOINT=http://localhost:11434/api/generate
 EXTRACTION_PROMPT=You are an intelligent assistant for invoice information extraction.\n\nGiven the following invoice text, extract the following fields and return a JSON with these keys:\n- "customer_name"\n- "invoice_number"\n- "invoice_date"\n- "invoice_amount"\n\nIf any field is missing, set its value to null.\n\nHere is the invoice text:\n{{invoice_text}}\n\nReturn ONLY the JSON object.
