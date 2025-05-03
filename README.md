@@ -29,6 +29,7 @@ This project **explicitly uses IBM's open-source Granite LLM** (`granite3.3:2b`)
 ### Setup
 
 ollama pull granite3.3:2b
+
 ollama run granite3.3:2b
 
 
