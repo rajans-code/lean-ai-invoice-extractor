@@ -5,7 +5,6 @@
 **💻 Designed for Local Use**  
 Everything can run on a regular laptop or desktop PC and no GPU or cloud infrastructure required. 
 
----
 
 ## 🔍 Features
 
@@ -20,43 +19,45 @@ Everything can run on a regular laptop or desktop PC and no GPU or cloud infrast
 - Generates batch-wise structured JSON and a CSV summary
 - Logging and traceability for auditing
 
----
+## 📂 Directory Structure
 
-## 🧠 Granite LLM Usage
+```
+Output/
+└── <batch_id>/
+    ├── log/
+    │   └── batch_<batch_id>.log
+    ├── batch_input/
+    │   └── (processed input files)
+    ├── *.full.json
+    ├── *.filtered.json
+    └── summary.csv
 
-This project **explicitly uses IBM's open-source Granite LLM** (`granite3.3:2b`) via the [Ollama](https://ollama.com) runtime.
 
-### Setup
+## Docling and Granite LLM Usage
+
+This project uses open-source Docling and IBM Granite LLM (`granite3.3:2b`) via the [Ollama](https://ollama.com) runtime.
+
+## Ollama and Granite LLM Setup
+Install Ollama from https://ollama.com
 
 ollama pull granite3.3:2b
-<<<<<<< HEAD
-=======
 
->>>>>>> e500254a06f69f8e113cf1887d7b30bcb5e26acc
 ollama run granite3.3:2b
-
 
 Ensure Ollama server is running on:
 
-
 OLLAMA_ENDPOINT=http://localhost:11434/api/generate
-
 
 ---
 
 ## 🛠️ Installation
 
-
-<<<<<<< HEAD
-git clone https://github.com/yourusername/lean-ai-invoice-extractor.git
-=======
 git clone https://github.com/yrajans-code/lean-ai-invoice-extractor.git
->>>>>>> e500254a06f69f8e113cf1887d7b30bcb5e26acc
+
 cd lean-ai-invoice-extractor
 python -m venv venv
 venv\Scripts\activate      # On Windows
 pip install -r requirements.txt
-
 
 ---
 
@@ -65,12 +66,12 @@ pip install -r requirements.txt
 Create a `.env` file in the root:
 
 
-INPUT_DIR=C:\Invoice\Input
-BASE_OUTPUT_DIR=C:\Invoice\Output
+INPUT_DIR=C:\Docling_working_dir\Input
+BASE_OUTPUT_DIR=C:\Docling_working_dir\Output
 OLLAMA_MODEL=granite3.3:2b
 OLLAMA_ENDPOINT=http://localhost:11434/api/generate
+EXTRACTION_PROMPT=You are an intelligent assistant for invoice information extraction.\n\nGiven the following invoice text, extract the following fields and return a JSON with these keys:\n- "customer_name"\n- "invoice_number"\n- "invoice_date"\n- "invoice_amount"\n\nIf any field is missing, set its value to null.\n\nHere is the invoice text:\n{{invoice_text}}\n\nReturn ONLY the JSON object.
 DEBUG_TRACE=False
-
 
 ---
 
@@ -78,9 +79,7 @@ DEBUG_TRACE=False
 
 Place your invoice files in the input folder and run:
 
-
 python lean_ai_invoice_extractor.py
-
 
 Output will be organized in a timestamped batch folder under `Output/`, including:
 
@@ -89,13 +88,5 @@ Output will be organized in a timestamped batch folder under `Output/`, includin
 - `summary.csv`: consolidated data
 - `log/batch_<timestamp>.log`: trace log
 
----
-<<<<<<< HEAD
-
-## 📄 License
-
-MIT License
-
----
 =======
->>>>>>> e500254a06f69f8e113cf1887d7b30bcb5e26acc
+

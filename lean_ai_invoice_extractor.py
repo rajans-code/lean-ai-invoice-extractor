@@ -5,9 +5,11 @@ import traceback
 import re
 import csv
 import pandas as pd
+import shutil
 from pathlib import Path
 from datetime import datetime
 from io import StringIO
+from dotenv import load_dotenv
 
 from docling_parse.pdf_parser import DoclingPdfParser
 from docling_core.types.doc.page import TextCellUnit
@@ -15,18 +17,24 @@ from docling.document_converter import DocumentConverter
 from PIL import Image, ImageEnhance
 import pytesseract
 
-# === Configuration ===
-INPUT_DIR = r"C:\Docling_working_dir\Input"
-BASE_OUTPUT_DIR = r"C:\Docling_working_dir\Output"
+# === Load Config from .env ===
+load_dotenv()
+INPUT_DIR = os.getenv("INPUT_DIR")
+BASE_OUTPUT_DIR = os.getenv("BASE_OUTPUT_DIR")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL")
+OLLAMA_ENDPOINT = os.getenv("OLLAMA_ENDPOINT")
+EXTRACTION_PROMPT = os.getenv("EXTRACTION_PROMPT")
+DEBUG_TRACE = os.getenv("DEBUG_TRACE", "false").lower() == "true"
+
+# === Setup Batch and Directories ===
 BATCH_ID = datetime.now().strftime("%Y%m%d%H%M%S%f")[:17]
 OUTPUT_DIR = os.path.join(BASE_OUTPUT_DIR, BATCH_ID)
+BATCH_INPUT_DIR = os.path.join(OUTPUT_DIR, "batch_input")
 LOG_DIR = os.path.join(OUTPUT_DIR, "log")
 LOG_PATH = os.path.join(LOG_DIR, f"batch_{BATCH_ID}.log")
-OLLAMA_MODEL = "granite3.3:2b"
-OLLAMA_ENDPOINT = "http://localhost:11434/api/generate"
-DEBUG_TRACE = False
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
+os.makedirs(BATCH_INPUT_DIR, exist_ok=True)
 os.makedirs(LOG_DIR, exist_ok=True)
 
 def log(message):
@@ -110,24 +118,9 @@ def send_to_ollama_from_fulljson(full_json_path, filtered_json_path):
         all_lines.extend(page.get("text_lines", []))
     invoice_text = "\n".join(all_lines)
 
-    prompt = f"""
-You are an intelligent assistant for invoice information extraction.
+    final_prompt = f"{EXTRACTION_PROMPT}\n\nHere is the invoice text:\n{invoice_text}\n\nReturn ONLY the JSON object."
 
-Given the following invoice text, extract the following fields and return a JSON with these keys:
-- "customer_name"
-- "invoice_number"
-- "invoice_date"
-- "invoice_amount"
-
-If any field is missing, set its value to null.
-
-Here is the invoice text:
-{invoice_text}
-
-Return ONLY the JSON object.
-"""
-
-    payload = {"model": OLLAMA_MODEL, "prompt": prompt, "stream": False}
+    payload = {"model": OLLAMA_MODEL, "prompt": final_prompt, "stream": False}
     try:
         response = requests.post(OLLAMA_ENDPOINT, json=payload)
         response.raise_for_status()
@@ -168,30 +161,6 @@ def parse_docx_to_modeldump(input_path):
 
 def parse_xlsx_invoice(filepath):
     df = pd.read_excel(filepath)
-    lines = []
-    for _, row in df.iterrows():
-        row_text = ", ".join(str(v) for v in row if pd.notna(v))
-        if row_text.strip():
-            lines.append({"text": row_text.strip()})
-    return {
-        "pages": {
-            "1": {"text_blocks": lines}
-        },
-        "invoice_images": [str(filepath)]
-    }
-
-def parse_csv_invoice(filepath):
-    with open(filepath, 'r', encoding='utf-8') as f:
-        all_lines = f.readlines()
-    table_start_idx = -1
-    for idx, line in enumerate(all_lines):
-        if line.strip().lower().startswith("description"):
-            table_start_idx = idx
-            break
-    if table_start_idx == -1:
-        raise ValueError("Could not locate the table header in CSV.")
-    tabular_text = "".join(all_lines[table_start_idx:])
-    df = pd.read_csv(StringIO(tabular_text))
     lines = []
     for _, row in df.iterrows():
         row_text = ", ".join(str(v) for v in row if pd.notna(v))
@@ -246,7 +215,7 @@ def main():
     log("[START] Invoice Batch Processor")
     for file_path in Path(INPUT_DIR).glob("*.*"):
         ext = file_path.suffix.lower()
-        if ext not in {".pdf", ".docx", ".doc", ".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".xlsx", ".csv"}:
+        if ext not in {".pdf", ".docx", ".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".xlsx"}:
             continue
         filename_stem = file_path.stem
         full_json_path = os.path.join(OUTPUT_DIR, f"{filename_stem}.full.json")
@@ -254,24 +223,27 @@ def main():
         try:
             if ext == ".pdf":
                 doc_data = parse_pdf_to_dict(str(file_path))
-            elif ext in {".docx", ".doc"}:
+            elif ext == ".docx":
                 doc_data = parse_docx_to_modeldump(str(file_path))
             elif ext in {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp"}:
                 text_data = extract_text_from_image(str(file_path))
                 doc_data = {"pages": {"1": {"text_blocks": [{"text": line} for line in text_data[0]["text_lines"]]}}, "invoice_images": [str(file_path)]}
             elif ext == ".xlsx":
                 doc_data = parse_xlsx_invoice(str(file_path))
-            elif ext == ".csv":
-                doc_data = parse_csv_invoice(str(file_path))
             else:
                 continue
+
             save_json(doc_data, full_json_path)
             send_to_ollama_from_fulljson(full_json_path, filtered_json_path)
+
+            shutil.move(str(file_path), os.path.join(BATCH_INPUT_DIR, file_path.name))
             log(f"[DONE] {file_path.name}\n{'='*60}")
+
         except Exception as e:
             log(f"[❌ ERROR] Failed to process {file_path.name}: {e}")
             log(traceback.format_exc())
     generate_summary_csv(OUTPUT_DIR)
     log("[COMPLETE] All files processed.")
 
-main()
+if __name__ == "__main__":
+    main()
